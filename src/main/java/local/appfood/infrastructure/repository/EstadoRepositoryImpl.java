@@ -5,6 +5,7 @@ import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
 import local.appfood.domain.model.Estado;
 import local.appfood.domain.repository.EstadoRepository;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -34,8 +35,12 @@ public class EstadoRepositoryImpl implements EstadoRepository {
 
     @Transactional
     @Override
-    public void remover(Estado estado) {
-        estado = buscar(estado.getId());
+    public void remover(Long id) {
+        Estado estado = this.buscar(id);
+        if(estado == null){
+            throw new EmptyResultDataAccessException(1);
+        }
+
         manager.remove(estado);
     }
 

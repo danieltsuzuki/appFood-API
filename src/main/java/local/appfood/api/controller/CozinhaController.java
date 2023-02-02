@@ -54,7 +54,7 @@ public class CozinhaController {
     }
 
     @DeleteMapping("/{cozinhaId}")
-    public ResponseEntity<Cozinha> remover(@PathVariable Long cozinhaId){
+    public ResponseEntity<?> remover(@PathVariable Long cozinhaId){
         try{
             cadastroCozinhaService.excluir(cozinhaId);
             return ResponseEntity.noContent().build();
