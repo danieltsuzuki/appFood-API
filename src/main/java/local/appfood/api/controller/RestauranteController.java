@@ -13,7 +13,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/restaurantes")
@@ -24,14 +26,14 @@ public class RestauranteController {
     private CadastroRestauranteService cadastroRestauranteService;
     @GetMapping
     public List<Restaurante> listar(){
-        return restauranteRepository.listar();
+        return restauranteRepository.findAll();
     }
 
     @GetMapping("/{restauranteId}")
     public ResponseEntity<?> buscar(@PathVariable Long restauranteId){
-        Restaurante restaurante = restauranteRepository.buscar(restauranteId);
-        if(restaurante != null){
-            return ResponseEntity.ok().body(restaurante);
+        Optional<Restaurante> restaurante = restauranteRepository.findById(restauranteId);
+        if(restaurante.isPresent()){
+            return ResponseEntity.ok().body(restaurante.get());
         }
         return ResponseEntity.badRequest().build();
     }
@@ -50,14 +52,16 @@ public class RestauranteController {
 
     @PutMapping("/{restauranteId}")
     public ResponseEntity<?> atualizar(@PathVariable Long restauranteId, @RequestBody Restaurante restaurante){
-        Restaurante restauranteAtual = restauranteRepository.buscar(restauranteId);
+        Optional<Restaurante> restauranteAtual = restauranteRepository.findById(restauranteId);
 
-        if(restauranteAtual == null){
+        if(restauranteAtual.isEmpty()){
             return ResponseEntity.notFound().build();
         }
 
-        BeanUtils.copyProperties(restaurante, restauranteAtual, "id");
-        cadastroRestauranteService.salvar(restauranteAtual);
-        return ResponseEntity.ok(restauranteAtual);
+        BeanUtils.copyProperties(restaurante, restauranteAtual.get(), "id");
+        cadastroRestauranteService.salvar(restauranteAtual.get());
+        return ResponseEntity.ok(restauranteAtual.get());
     }
+
+
 }

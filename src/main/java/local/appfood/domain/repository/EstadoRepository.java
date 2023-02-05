@@ -1,12 +1,17 @@
 package local.appfood.domain.repository;
 
 import local.appfood.domain.model.Estado;
+import local.appfood.domain.model.Restaurante;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.util.List;
 
-public interface EstadoRepository {
-    List<Estado> listar();
-    Estado buscar(Long id);
-    Estado salvar(Estado estado);
-    void remover(Long Id);
+@Repository
+public interface EstadoRepository extends JpaRepository<Estado, Long> {
+
+    interface RestauranteRepositoryQueries {
+        List<Restaurante> find(String nome, BigDecimal taxaInicial, BigDecimal taxaFinal);
+    }
 }

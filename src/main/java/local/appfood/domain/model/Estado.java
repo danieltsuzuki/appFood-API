@@ -8,7 +8,7 @@ import lombok.Data;
 
 @Entity
 @Data
-public class Estado {
+public class Estado{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

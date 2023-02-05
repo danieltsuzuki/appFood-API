@@ -2,41 +2,24 @@ package local.appfood.infrastructure.repository;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import jakarta.transaction.Transactional;
 import local.appfood.domain.model.Restaurante;
-import local.appfood.domain.repository.RestauranteRepository;
-import org.springframework.stereotype.Component;
+import local.appfood.domain.repository.EstadoRepository;
+import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.util.List;
 
-@Component
-public class RestauranteRepositoryImpl implements RestauranteRepository {
-
+@Repository
+public class RestauranteRepositoryImpl implements EstadoRepository.RestauranteRepositoryQueries {
     @PersistenceContext
     private EntityManager manager;
 
     @Override
-    public List<Restaurante> listar() {
-        return manager.createQuery("from Restaurante", Restaurante.class)
+    public List<Restaurante> find(String nome, BigDecimal taxaInicial, BigDecimal taxaFinal){
+        var jpql = "from Restaurante where nome like :nome and taxaFrete between" +
+                ":taxaInicial and :taxaFinal";
+        return manager.createQuery(jpql, Restaurante.class).setParameter("nome", "%" + nome + "%")
+                .setParameter("taxaInicial", taxaInicial).setParameter("taxaFinal", taxaFinal)
                 .getResultList();
     }
-
-    @Override
-    public Restaurante buscar(Long id) {
-        return manager.find(Restaurante.class, id);
-    }
-
-    @Transactional
-    @Override
-    public Restaurante salvar(Restaurante restaurante) {
-        return manager.merge(restaurante);
-    }
-
-    @Transactional
-    @Override
-    public void remover(Restaurante restaurante) {
-        restaurante = buscar(restaurante.getId());
-        manager.remove(restaurante);
-    }
-
 }

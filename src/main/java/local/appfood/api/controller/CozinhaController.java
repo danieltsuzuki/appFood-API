@@ -1,5 +1,6 @@
 package local.appfood.api.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import local.appfood.domain.exception.EntidadeEmUsoExcpetion;
 import local.appfood.domain.exception.EntidadeNaoEncontradaException;
 import local.appfood.domain.model.Cozinha;
@@ -9,9 +10,14 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.ReflectionUtils;
 import org.springframework.web.bind.annotation.*;
 
+import java.lang.reflect.Field;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
 @RestController
 @RequestMapping(value = "/cozinhas")
 public class CozinhaController {
@@ -22,14 +28,14 @@ public class CozinhaController {
 
     @GetMapping
     public List<Cozinha> listar(){
-        return cozinhaRepository.listar();
+        return cozinhaRepository.findAll();
     }
 
     @GetMapping("/{cozinhaId}")
     public ResponseEntity<Cozinha> buscar(@PathVariable Long cozinhaId){
-        Cozinha cozinha =  cozinhaRepository.buscar(cozinhaId);
-        if(cozinha != null){
-            return ResponseEntity.ok(cozinha);
+        Optional<Cozinha> cozinha = cozinhaRepository.findById(cozinhaId);
+        if(cozinha.isPresent()){
+            return ResponseEntity.ok(cozinha.get());
         }
         return ResponseEntity.notFound().build();
     }
@@ -42,15 +48,14 @@ public class CozinhaController {
 
     @PutMapping("/{cozinhaId}")
     public ResponseEntity<Cozinha> atualizar(@PathVariable Long cozinhaId, @RequestBody Cozinha cozinha){
-        Cozinha cozinhaAtual = cozinhaRepository.buscar(cozinhaId);
+        Optional<Cozinha> cozinhaAtual = cozinhaRepository.findById(cozinhaId);
 
-        if(cozinhaAtual == null){
-            return ResponseEntity.notFound().build();
+        if(cozinhaAtual.isPresent()){
+            BeanUtils.copyProperties(cozinha, cozinhaAtual.get(), "id");
+            cadastroCozinhaService.salvar(cozinhaAtual.get());
+            return ResponseEntity.ok(cozinhaAtual.get());
         }
-
-        BeanUtils.copyProperties(cozinha, cozinhaAtual, "id");
-        cadastroCozinhaService.salvar(cozinhaAtual);
-        return ResponseEntity.ok(cozinhaAtual);
+        return ResponseEntity.notFound().build();
     }
 
     @DeleteMapping("/{cozinhaId}")
@@ -59,10 +64,37 @@ public class CozinhaController {
             cadastroCozinhaService.excluir(cozinhaId);
             return ResponseEntity.noContent().build();
         }catch (EntidadeNaoEncontradaException e){
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }catch(EntidadeEmUsoExcpetion e){
-            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
         }
+    }
+    @PatchMapping("/{cozinhaId}")
+    public ResponseEntity<?> atualizarParcial(@PathVariable Long cozinhaId, @RequestBody Map<String, Object> campos){
+        Optional<Cozinha> cozinhaAtual = cozinhaRepository.findById(cozinhaId);
 
+        if(cozinhaAtual.isPresent()){
+            return ResponseEntity.notFound().build();
+        }
+        merge(campos, cozinhaAtual.get());
+        return atualizar(cozinhaId, cozinhaAtual.get());
+    }
+
+    private void merge(Map<String, Object> dadosOrigem, Cozinha cozinhaDestino){
+        ObjectMapper objectMapper = new ObjectMapper();
+        Cozinha cozinhaOrigem = objectMapper.convertValue(dadosOrigem, Cozinha.class);
+
+        System.out.println(dadosOrigem);
+
+        dadosOrigem.forEach((nomePropriedade, valorPropriedade) ->{
+            Field field = ReflectionUtils.findField(Cozinha.class, nomePropriedade);
+            field.setAccessible(true);
+
+            Object novoValor = ReflectionUtils.getField(field, cozinhaOrigem);
+
+            System.out.println(nomePropriedade + " = " + valorPropriedade + " = " + novoValor);
+
+            ReflectionUtils.setField(field, cozinhaDestino, novoValor);
+        });
     }
 }
