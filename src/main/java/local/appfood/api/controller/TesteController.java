@@ -1,11 +1,17 @@
 package local.appfood.api.controller;
 
+import static local.appfood.infrastructure.repository.spec.RestauranteSpecs.comFreteGratis;
+import static local.appfood.infrastructure.repository.spec.RestauranteSpecs.comNomeSemelhante;
+
 import local.appfood.domain.model.Cozinha;
 import local.appfood.domain.model.Restaurante;
 import local.appfood.domain.repository.CozinhaRepository;
 import local.appfood.domain.repository.RestauranteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -33,8 +39,9 @@ public class TesteController {
     }
 
 
-    @GetMapping("restaurantes/por-nome-e-frete")
-    public List<Restaurante> restaurantesPorNomeFrete(String nome, BigDecimal taxaInicial, BigDecimal taxaFinal){
-        return restauranteRepository.find(nome, taxaInicial, taxaFinal);
+    @GetMapping("restaurantes/com-frete-gratis")
+    public List<Restaurante> restaurantesComFreteFrete(String nome){
+
+        return restauranteRepository.findComFreteGratis(nome);
     }
 }
